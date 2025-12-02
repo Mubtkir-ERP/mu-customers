@@ -19,7 +19,12 @@ def execute(filters=None):
 			"width": 250,
 		},
 		{"label": _("Party"), "fieldname": "party", "fieldtype": "Data", "width": 150},
-		{"label": _("Tax ID"), "fieldname": "tax_id", "fieldtype": "Data", "width": 180},
+		{
+			"label": _("VAT Registration Number"),
+			"fieldname": "custom_vat_registration_number",
+			"fieldtype": "Data",
+			"width": 180,
+		},
 		{"label": _("Date"), "fieldname": "posting_date", "fieldtype": "Date", "width": 150},
 		{"label": _("Item"), "fieldname": "item_name", "fieldtype": "Data", "width": 200},
 		{"label": _("Net Amount"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 130},
@@ -63,7 +68,7 @@ def execute(filters=None):
 			{
 				"invoice_no": "",
 				"party": "",
-				"tax_id": "",
+				"custom_vat_registration_number": "",
 				"posting_date": None,
 				"item_name": "",
 				"net_amount": None,
@@ -94,7 +99,6 @@ def get_invoices(doctype, filters, is_return):
 			invoice.name.as_("invoice_no"),
 			invoice.posting_date,
 			(invoice.customer if doctype == "Sales Invoice" else invoice.supplier).as_("party"),
-			invoice.tax_id,
 			invoice.net_total.as_("net_amount"),
 			invoice.total_taxes_and_charges.as_("tax_amount"),
 			invoice_item.item_name,
@@ -112,6 +116,14 @@ def get_invoices(doctype, filters, is_return):
 			query = query.where(invoice.customer == filters["party"])
 		else:
 			query = query.where(invoice.supplier == filters["party"])
+	if doctype == "Sales Invoice":
+		customer = DocType("Customer")
+
+		query = (
+			query.select(customer.custom_vat_registration_number)
+			.left_join(customer)
+			.on(customer.name == invoice.customer)
+		)
 	if filters.get("invoice_no"):
 		query = query.where(invoice.name == filters["invoice_no"])
 	if not filters.get("include_non_taxed"):
