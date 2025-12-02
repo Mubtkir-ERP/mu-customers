@@ -244,4 +244,5 @@ app_license = "mit"
 
 fixtures = [
 	{"dt": "Custom Field", "filters": [["module", "=", "Mu Customers"]]},
+	{"dt": "Property Setter", "filters": [["module", "=", "Mu Customers"]]},
 ]
