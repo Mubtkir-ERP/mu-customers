@@ -48,6 +48,7 @@ doctype_js = {
 	"Sales Invoice": [
 		"public/js/sales_invoice.js",
 		"public/js/item_prices_select.js",
+		"public/js/customer_branches_sales.js",
 	],
 	"Delivery Note": "public/js/item_prices_select.js",
 	"Sales Order": "public/js/item_prices_select.js",
