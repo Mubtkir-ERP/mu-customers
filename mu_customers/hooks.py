@@ -45,7 +45,16 @@ app_license = "mit"
 # include js in doctype views
 doctype_js = {
 	"Payment Entry": "public/js/payment_entry.js",
-	"Sales Invoice": "public/js/sales_invoice.js",
+	"Sales Invoice": [
+		"public/js/sales_invoice.js",
+		"public/js/item_prices_select.js",
+	],
+	"Delivery Note": "public/js/item_prices_select.js",
+	"Sales Order": "public/js/item_prices_select.js",
+	"Purchase Invoice": "public/js/item_prices_select.js",
+	"Purchase Order": ["public/js/item_prices_select.js"],
+	"Purchase Receipt": ["public/js/item_prices_select.js"],
+	"Quotation": ["public/js/item_prices_select.js"],
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
