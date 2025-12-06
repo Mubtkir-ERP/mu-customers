@@ -158,6 +158,7 @@ doctype_js = {
 
 doc_events = {
 	"Item": {"validate": "mu_customers.events.item.clear_auto_description"},
+	"Account": {"autoname": "mu_customers.events.account_naming.custom_autoname"},
 }
 
 # Scheduled Tasks
