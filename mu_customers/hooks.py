@@ -163,6 +163,9 @@ doc_events = {
 		"autoname": "mu_customers.events.item.custom_autoname",
 	},
 	"Account": {"autoname": "mu_customers.events.account_naming.custom_autoname"},
+	"Stock Ledger Entry": {
+		"on_update": "mu_customers.events.stock_ledger_entry.update_item_qty_on_bin_change",
+	},
 }
 
 # Scheduled Tasks
