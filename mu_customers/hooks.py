@@ -44,6 +44,7 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
+	"Item": "public/js/item_name.js",
 	"Payment Entry": "public/js/payment_entry.js",
 	"Sales Invoice": [
 		"public/js/sales_invoice.js",
@@ -157,7 +158,10 @@ doctype_js = {
 # Hook on document methods and events
 
 doc_events = {
-	"Item": {"validate": "mu_customers.events.item.clear_auto_description"},
+	"Item": {
+		"validate": "mu_customers.events.item.clear_auto_description",
+		"autoname": "mu_customers.events.item.custom_autoname",
+	},
 	"Account": {"autoname": "mu_customers.events.account_naming.custom_autoname"},
 }
 
