@@ -535,13 +535,13 @@
   "doctype_or_field": "DocField",
   "field_name": "payments_section",
   "is_system_generated": 0,
-  "modified": "2025-12-14 16:23:36.681766",
+  "modified": "2025-12-16 16:31:28.323632",
   "module": "Mu Customers",
   "name": "Sales Invoice-payments_section-collapsible",
   "property": "collapsible",
   "property_type": "Check",
   "row_name": null,
-  "value": "0"
+  "value": "1"
  },
  {
   "default_value": null,
