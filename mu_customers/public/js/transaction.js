@@ -112,7 +112,7 @@ if (erpnext.TransactionController) {
 			}).length;
 
 		if (this.frm.doc.doctype && frappe.meta.get_docfield(this.frm.doc.doctype, "net_total")) {
-			this.frm.toggle_display("net_total", show);
+			this.frm.toggle_display("net_total", true);
 		}
 
 		if (
@@ -121,7 +121,7 @@ if (erpnext.TransactionController) {
 		) {
 			this.frm.toggle_display(
 				"base_net_total",
-				show && me.frm.doc.currency != company_currency
+				true && me.frm.doc.currency != company_currency
 			);
 		}
 	};
