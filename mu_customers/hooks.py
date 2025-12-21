@@ -102,7 +102,7 @@ doctype_js = {
 # Installation
 # ------------
 
-# before_install = "mu_customers.install.before_install"
+before_install = "mu_customers.patches.rename_branch_fields_on_sales_order.execute"
 # after_install = "mu_customers.install.after_install"
 
 # Uninstallation
