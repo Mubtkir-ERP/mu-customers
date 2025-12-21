@@ -5,7 +5,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "enable_item_qty_popup_si"
+  "enable_item_qty_popup_si",
+  "enable_item_numeric_autoname"
  ],
  "fields": [
   {
@@ -13,13 +14,19 @@
    "fieldname": "enable_item_qty_popup_si",
    "fieldtype": "Check",
    "label": "Enable Item Qty Popup (Sales Invoice)"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_item_numeric_autoname",
+   "fieldtype": "Check",
+   "label": "Enable Item Numeric Autoname"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-06 11:42:11.933543",
+ "modified": "2025-12-21 16:13:29.948071",
  "modified_by": "Administrator",
  "module": "Mu Customers",
  "name": "Extra Features Settings",

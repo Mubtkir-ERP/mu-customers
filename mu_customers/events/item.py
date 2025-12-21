@@ -10,6 +10,11 @@ def clear_auto_description(doc, method=None):
 
 
 def custom_autoname(doc, method):
+	enable_item_numeric_autoname = frappe.db.get_single_value(
+		"Extra Features Settings", "enable_item_numeric_autoname"
+	)
+	if not enable_item_numeric_autoname:
+		return
 	# site_json = frappe.db.get_single_value("Feature Settings", "site_json")
 	# if site_json:
 	#     site_json_dict = json.loads(site_json)
