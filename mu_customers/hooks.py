@@ -104,7 +104,7 @@ doctype_js = {
 
 before_install = [
 	"mu_customers.patches.rename_branch_fields_on_sales_order.execute",
-	"mu_customers.install.delete_default_warehouse_from_invoices",
+	"mu_customers.install.before_install",
 ]
 # after_install = "mu_customers.install.after_install"
 
