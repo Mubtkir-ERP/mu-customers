@@ -1,5 +1,14 @@
 import frappe
 
+from mu_customers.patches.rename_branch_fields_on_customer import (
+	execute as execute_rename_branch_fields_on_customer,
+)
+
+
+def before_install():
+	delete_default_warehouse_from_invoices()
+	execute_rename_branch_fields_on_customer()
+
 
 def delete_default_warehouse_from_invoices():
 	frappe.delete_doc_if_exists("Property Setter", "Sales Order-set_warehouse-default")
