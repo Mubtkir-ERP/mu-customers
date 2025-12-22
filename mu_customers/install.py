@@ -1,6 +1,6 @@
 import frappe
 
-from mu_customers.patches.rename_branch_fields_on_customer import (
+from mu_customers.patches.v2_rename_branch_fields_on_customer import (
 	execute as execute_rename_branch_fields_on_customer,
 )
 
