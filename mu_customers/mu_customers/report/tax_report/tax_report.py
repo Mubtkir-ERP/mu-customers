@@ -11,10 +11,17 @@ def execute(filters=None):
 
 	columns = [
 		{
+			"label": _("Voucher Type"),
+			"fieldname": "voucher_type",
+			"fieldtype": "Data",
+			"width": 0,
+			"hidden": 1,
+		},
+		{
 			"label": _("Invoice No"),
 			"fieldname": "invoice_no",
-			"fieldtype": "Link",
-			"options": "Sales Invoice",
+			"fieldtype": "Dynamic Link",
+			"options": "voucher_type",
 			"width": 250,
 		},
 		{"label": _("Party"), "fieldname": "party", "fieldtype": "Data", "width": 150},
@@ -155,6 +162,7 @@ def get_voucher_entries(filters):
 		results.append(
 			{
 				"invoice_no": row["invoice_no"],
+				"voucher_type": "Vouchers Entry",
 				"posting_date": row["posting_date"],
 				"party": row.get("party") or "",
 				"custom_vat_registration_number": "",
@@ -220,6 +228,7 @@ def get_invoices(doctype, filters, is_return):
 			inv_row["indent"] = 1
 			inv_row["net_amount"] = abs(inv_row.get("net_amount") or 0)
 			inv_row["tax_amount"] = abs(inv_row.get("tax_amount") or 0)
+			inv_row["voucher_type"] = doctype
 			results.append(inv_row)
 			last_invoice_no = row["invoice_no"]
 
