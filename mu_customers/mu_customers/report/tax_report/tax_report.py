@@ -4,7 +4,6 @@
 import frappe
 from frappe import _
 from frappe.query_builder import DocType
-from frappe.query_builder.functions import NullIf
 
 
 def execute(filters=None):
@@ -42,6 +41,7 @@ def execute(filters=None):
 
 	total_net = 0
 	total_tax = 0
+
 	for section_name, params in sections.items():
 		invoices = get_invoices(params["doctype"], filters, params["is_return"])
 		section_net = sum(row.get("net_amount", 0) for row in invoices if row.get("indent") == 1)
@@ -51,10 +51,9 @@ def execute(filters=None):
 		):
 			section_net = -section_net
 			section_tax = -section_tax
+
 		data.append({"invoice_no": section_name, "net_amount": None, "tax_amount": None, "indent": 0})
-
 		data.extend(invoices)
-
 		data.append(
 			{
 				"invoice_no": f"{section_name} Total",
@@ -63,28 +62,110 @@ def execute(filters=None):
 				"indent": 0,
 			}
 		)
-		# Add an empty row for better readability
-		data.append(
-			{
-				"invoice_no": "",
-				"party": "",
-				"custom_vat_registration_number": "",
-				"posting_date": None,
-				"item_name": "",
-				"net_amount": None,
-				"tax_amount": None,
-				"indent": 0,
-			}
-		)
+		data.append(_empty_row())
 
 		total_net += section_net
 		total_tax += section_tax
+
+	# ── Voucher Entries section ──────────────────────────────────────────────
+	voucher_section_name = _("Voucher Entries")
+	voucher_rows = get_voucher_entries(filters)
+	voucher_net = sum(row.get("net_amount", 0) for row in voucher_rows if row.get("indent") == 1)
+	voucher_tax = sum(row.get("tax_amount", 0) for row in voucher_rows if row.get("indent") == 1)
+
+	data.append({"invoice_no": voucher_section_name, "net_amount": None, "tax_amount": None, "indent": 0})
+	data.extend(voucher_rows)
+	data.append(
+		{
+			"invoice_no": f"{voucher_section_name} Total",
+			"net_amount": voucher_net,
+			"tax_amount": voucher_tax,
+			"indent": 0,
+		}
+	)
+	data.append(_empty_row())
+
+	total_net += voucher_net
+	total_tax += voucher_tax
+	# ────────────────────────────────────────────────────────────────────────
 
 	data.append(
 		{"invoice_no": _("Grand Total"), "net_amount": total_net, "tax_amount": total_tax, "indent": 0}
 	)
 
 	return columns, data
+
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+def _empty_row():
+	return {
+		"invoice_no": "",
+		"party": "",
+		"custom_vat_registration_number": "",
+		"posting_date": None,
+		"item_name": "",
+		"net_amount": None,
+		"tax_amount": None,
+		"indent": 0,
+	}
+
+
+def get_voucher_entries(filters):
+	"""
+	Pull vouchers from GL Entry (excluding Sales/Purchase Invoice),
+	joined with the custom 'Vouchers Entry' doctype to get:
+	  - net_amount : total_allocated_amount  (from Vouchers Entry)
+	  - tax_amount : total_taxes_and_charges (from Vouchers Entry)
+	"""
+	gl = DocType("GL Entry")
+	ve = DocType("Vouchers Entry")
+
+	EXCLUDED_VOUCHER_TYPES = ("Sales Invoice", "Purchase Invoice")
+
+	query = (
+		frappe.qb.from_(gl)
+		.inner_join(ve)
+		.on(ve.name == gl.voucher_no)
+		.select(
+			gl.voucher_no.as_("invoice_no"),
+			gl.posting_date,
+			gl.party.as_("party"),
+			ve.total_allocated_amount.as_("net_amount"),
+			ve.total_taxes.as_("tax_amount"),
+		)
+		.where(gl.is_cancelled == 0)
+		.where(gl.voucher_type.notin(EXCLUDED_VOUCHER_TYPES))
+		.groupby(gl.voucher_no)
+	)
+
+	if filters.get("from_date"):
+		query = query.where(gl.posting_date >= filters["from_date"])
+	if filters.get("to_date"):
+		query = query.where(gl.posting_date <= filters["to_date"])
+	if filters.get("invoice_no"):
+		query = query.where(gl.voucher_no == filters["invoice_no"])
+	if not filters.get("include_non_taxed"):
+		query = query.where(ve.total_taxes != 0)
+
+	rows = query.run(as_dict=True)
+	results = []
+
+	for row in rows:
+		results.append(
+			{
+				"invoice_no": row["invoice_no"],
+				"posting_date": row["posting_date"],
+				"party": row.get("party") or "",
+				"custom_vat_registration_number": "",
+				"item_name": "",
+				"net_amount": abs(row.get("net_amount") or 0),
+				"tax_amount": abs(row.get("tax_amount") or 0),
+				"indent": 1,
+			}
+		)
+
+	return results
 
 
 def get_invoices(doctype, filters, is_return):
@@ -118,7 +199,6 @@ def get_invoices(doctype, filters, is_return):
 			query = query.where(invoice.supplier == filters["party"])
 	if doctype == "Sales Invoice":
 		customer = DocType("Customer")
-
 		query = (
 			query.select(customer.custom_vat_registration_number)
 			.left_join(customer)
