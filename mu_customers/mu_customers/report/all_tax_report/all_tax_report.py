@@ -269,7 +269,7 @@ def get_gl_tax_entries(filters):
 		for r in frappe.get_all(
 			"Customer",
 			filters={"name": ["in", sales_parties]},
-			fields=["name", "custom_vat_registration_number"],
+			fields=["name"],
 		):
 			customer_vat_map[r["name"]] = r.get("custom_vat_registration_number") or ""
 
@@ -277,7 +277,7 @@ def get_gl_tax_entries(filters):
 		for r in frappe.get_all(
 			"Supplier",
 			filters={"name": ["in", purchase_parties]},
-			fields=["name", "custom_vat_registration_number"],
+			fields=["name"],
 		):
 			supplier_vat_map[r["name"]] = r.get("custom_vat_registration_number") or ""
 
