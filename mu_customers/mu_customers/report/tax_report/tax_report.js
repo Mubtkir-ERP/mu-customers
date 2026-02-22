@@ -4,6 +4,14 @@
 frappe.query_reports["Tax Report"] = {
 	filters: [
 		{
+			"fieldname": "company",
+			"label": "Company",
+			"fieldtype": "Link",
+			"options": "Company",
+			"default": "",
+			"reqd": 0
+		},
+		{
 			fieldname: "from_date",
 			label: __("From Date"),
 			fieldtype: "Date",
@@ -75,9 +83,8 @@ frappe.query_reports["Tax Report"] = {
 		let formatted_value = default_formatter(value, row, column, data);
 
 		if (data && data.indent !== undefined) {
-			formatted_value = `<div style="padding-left:${
-				data.indent * 20
-			}px;">${formatted_value}</div>`;
+			formatted_value = `<div style="padding-left:${data.indent * 20
+				}px;">${formatted_value}</div>`;
 		}
 
 		if (data && data.invoice_no && !data.invoice_no.includes("Total") && data.indent === 0) {
