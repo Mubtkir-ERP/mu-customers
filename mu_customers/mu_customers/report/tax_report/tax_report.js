@@ -72,6 +72,16 @@ frappe.query_reports["Tax Report"] = {
 			},
 		},
 		{
+			fieldname: "tax_account",
+			label: __("Tax Accounts"),
+			fieldtype: "MultiSelectList",
+			get_data: function (txt) {
+				return frappe.db.get_link_options("Account", txt, {
+					company: frappe.query_report.get_filter_value("company"),
+				});
+			},
+		},
+		{
 			fieldname: "include_non_taxed",
 			label: __("Include Non-Taxed Invoices"),
 			fieldtype: "Check",
@@ -81,6 +91,18 @@ frappe.query_reports["Tax Report"] = {
 
 	formatter: function (value, row, column, data, default_formatter) {
 		let formatted_value = default_formatter(value, row, column, data);
+
+		// Hide the negative sign for Voucher Entry data rows
+		if (
+			data &&
+			data.indent === 1 &&
+			data.voucher_type === "Vouchers Entry" &&
+			(column.fieldname === "net_amount" || column.fieldname === "tax_amount") &&
+			value < 0
+		) {
+			// Re-format with absolute value to hide the minus sign
+			formatted_value = default_formatter(Math.abs(value), row, column, data);
+		}
 
 		if (data && data.indent !== undefined) {
 			formatted_value = `<div style="padding-left:${data.indent * 20
