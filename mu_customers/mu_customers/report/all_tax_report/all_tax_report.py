@@ -6,6 +6,10 @@ from frappe import _
 from frappe.query_builder import DocType
 
 
+def has_voucher_entry_tables():
+	return frappe.db.table_exists("Vouchers Entry") and frappe.db.table_exists("Voucher Entry Account")
+
+
 def execute(filters=None):
 	filters = filters or {}
 
@@ -54,6 +58,7 @@ def execute(filters=None):
 		invoices = get_invoices(params["doctype"], filters, params["is_return"])
 		section_net = sum(row.get("net_amount", 0) for row in invoices if row.get("indent") == 1)
 		section_tax = sum(row.get("tax_amount", 0) for row in invoices if row.get("indent") == 1)
+
 		if (params["doctype"] == "Purchase Invoice" and not params["is_return"]) or (
 			params["doctype"] == "Sales Invoice" and params["is_return"]
 		):
@@ -76,25 +81,27 @@ def execute(filters=None):
 		total_tax += section_tax
 
 	# ── Voucher Entries section ──────────────────────────────────────────────
-	voucher_section_name = _("Voucher Entries")
-	voucher_rows = get_voucher_entries(filters)
-	voucher_net = sum(row.get("net_amount", 0) for row in voucher_rows if row.get("indent") == 1)
-	voucher_tax = sum(row.get("tax_amount", 0) for row in voucher_rows if row.get("indent") == 1)
+	if has_voucher_entry_tables():
+		voucher_section_name = _("Voucher Entries")
+		voucher_rows = get_voucher_entries(filters)
+		voucher_net = sum(row.get("net_amount", 0) for row in voucher_rows if row.get("indent") == 1)
+		voucher_tax = sum(row.get("tax_amount", 0) for row in voucher_rows if row.get("indent") == 1)
 
-	data.append({"invoice_no": voucher_section_name, "net_amount": None, "tax_amount": None, "indent": 0})
-	data.extend(voucher_rows)
-	data.append(
-		{
-			"invoice_no": f"{voucher_section_name} Total",
-			"net_amount": voucher_net,
-			"tax_amount": voucher_tax,
-			"indent": 0,
-		}
-	)
-	data.append(_empty_row())
+		if voucher_rows:
+			data.append({"invoice_no": voucher_section_name, "net_amount": None, "tax_amount": None, "indent": 0})
+			data.extend(voucher_rows)
+			data.append(
+				{
+					"invoice_no": f"{voucher_section_name} Total",
+					"net_amount": voucher_net,
+					"tax_amount": voucher_tax,
+					"indent": 0,
+				}
+			)
+			data.append(_empty_row())
 
-	total_net += voucher_net
-	total_tax += voucher_tax
+			total_net += voucher_net
+			total_tax += voucher_tax
 
 	# ── Journal Entries section ──────────────────────────────────────────────
 	journal_section_name = _("Journal Entries")
@@ -117,7 +124,6 @@ def execute(filters=None):
 
 		total_net += journal_net
 		total_tax += journal_tax
-	# ────────────────────────────────────────────────────────────────────────
 
 	data.append(
 		{"invoice_no": _("Grand Total"), "net_amount": total_net, "tax_amount": total_tax, "indent": 0}
@@ -141,16 +147,19 @@ def _empty_row():
 		"indent": 0,
 	}
 
+
 def get_tax_accounts(filters):
 	tax_accounts = filters.get("tax_account")
 	if not tax_accounts:
 		return []
+
 	if isinstance(tax_accounts, str):
 		try:
 			import json
 			tax_accounts = json.loads(tax_accounts)
 		except Exception:
 			tax_accounts = [tax_accounts]
+
 	return tax_accounts
 
 
@@ -166,17 +175,20 @@ def get_voucher_entries(filters):
 	  - party_type == "Customer"  → Customer.custom_vat_registration_number
 	  - party_type == "Supplier"  → Supplier.tax_id
 	"""
-	gl  = DocType("GL Entry")
-	ve  = DocType("Vouchers Entry")
+	if not has_voucher_entry_tables():
+		return []
+
+	gl = DocType("GL Entry")
+	ve = DocType("Vouchers Entry")
 	vea = DocType("Voucher Entry Account")
 
 	EXCLUDED_VOUCHER_TYPES = ("Sales Invoice", "Purchase Invoice")
 
 	tax_accounts = get_tax_accounts(filters)
 
-	# ── child rows sub-query: individual rows, no aggregation ────────────
 	from pypika import Case
 
+	# ── child rows sub-query: individual rows, no aggregation ────────────
 	if tax_accounts:
 		amounts_sub = (
 			frappe.qb.from_(vea)
@@ -195,7 +207,7 @@ def get_voucher_entries(filters):
 					.as_("tax_total"),
 			)
 			.where(
-				(vea.taxes.isnotnull() & (vea.taxes != "")) | 
+				(vea.taxes.isnotnull() & (vea.taxes != "")) |
 				vea.account.isin(tax_accounts)
 			)
 		)
@@ -464,7 +476,7 @@ def get_journal_entries(filters):
 
 	results = []
 	for row in rows:
-		tax_amount = (row.get("tax_amount") or 0)
+		tax_amount = row.get("tax_amount") or 0
 
 		results.append(
 			{
