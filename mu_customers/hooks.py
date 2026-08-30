@@ -8,8 +8,8 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
-app_include_js = "/assets/mu_customers/js/transaction.js"
+# Hard dependency: every doctype this app extends belongs to ERPNext.
+required_apps = ["erpnext"]
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
@@ -43,26 +43,58 @@ app_include_js = "/assets/mu_customers/js/transaction.js"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
+# transaction.js was loaded on every desk page through app_include_js and
+# replaced an ERPNext core prototype method. It is now an ordinary form script
+# on the doctypes that actually need it.
+# Loaded on every desk page so the popup queue exists before any form script
+# that uses it. Defines a namespace only - it patches nothing.
+app_include_js = [
+	"/assets/mu_customers/js/ui_queue.js",
+	# Quick entry controllers have to be registered before the dialog is opened
+	# from anywhere in the desk, so they cannot live under doctype_js.
+	"/assets/mu_customers/js/item_quick_entry.js",
+]
+
 doctype_js = {
-	"Item": "public/js/item_name.js",
-	"Payment Entry": "public/js/payment_entry.js",
+	"Item": [
+		"public/js/item_name.js",
+		"public/js/item.js",
+	],
 	"Sales Invoice": [
+		"public/js/transaction.js",
 		"public/js/sales_invoice.js",
 		"public/js/item_prices_select.js",
 		"public/js/customer_branches_sales.js",
+		"public/js/update_stock.js",
 	],
 	"Delivery Note": [
+		"public/js/transaction.js",
 		"public/js/item_prices_select.js",
 		"public/js/customer_branches_sales.js",
 	],
 	"Sales Order": [
+		"public/js/transaction.js",
 		"public/js/item_prices_select.js",
 		"public/js/customer_branches_sales.js",
 	],
-	"Purchase Invoice": "public/js/item_prices_select.js",
-	"Purchase Order": ["public/js/item_prices_select.js"],
-	"Purchase Receipt": ["public/js/item_prices_select.js"],
-	"Quotation": ["public/js/item_prices_select.js"],
+	"Purchase Invoice": [
+		"public/js/transaction.js",
+		"public/js/item_prices_select.js",
+		"public/js/update_stock.js",
+	],
+	"Purchase Order": [
+		"public/js/transaction.js",
+		"public/js/item_prices_select.js",
+	],
+	"Purchase Receipt": [
+		"public/js/transaction.js",
+		"public/js/item_prices_select.js",
+	],
+	"Quotation": [
+		"public/js/transaction.js",
+		"public/js/item_prices_select.js",
+	],
+	"Supplier Quotation": ["public/js/transaction.js"],
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -102,11 +134,10 @@ doctype_js = {
 # Installation
 # ------------
 
-before_install = [
-	"mu_customers.patches.rename_branch_fields_on_sales_order.execute",
-	"mu_customers.install.before_install",
-]
-# after_install = "mu_customers.install.after_install"
+# Patches belong in patches.txt, not in before_install - the previous list ran
+# a rename patch here *and* again from patches.txt on every install.
+before_install = "mu_customers.install.before_install"
+after_install = "mu_customers.install.after_install"
 
 # Uninstallation
 # ------------
@@ -162,10 +193,16 @@ before_install = [
 
 doc_events = {
 	"Item": {
-		"validate": "mu_customers.events.item.clear_auto_description",
+		"before_insert": "mu_customers.events.item.default_item_code_from_name",
+		"validate": [
+			"mu_customers.events.item.clear_auto_description",
+			"mu_customers.events.item.sync_default_warehouse_qty",
+		],
 		"autoname": "mu_customers.events.item.custom_autoname",
 	},
 	"Account": {"autoname": "mu_customers.events.account_naming.custom_autoname"},
+	"Sales Invoice": {"validate": "mu_customers.events.invoice.force_update_stock"},
+	"Purchase Invoice": {"validate": "mu_customers.events.invoice.force_update_stock"},
 	"Stock Ledger Entry": {
 		"on_update": "mu_customers.events.stock_ledger_entry.update_item_qty_on_bin_change",
 	},

@@ -1,35 +1,31 @@
+// Suggest the next numeric item code on a new Item.
+//
+// Rewritten: the code is now derived server-side with the same MAX() logic the
+// autoname hook uses, instead of reading the most recently created item in the
+// browser and hoping its name happened to be numeric.
+
 frappe.ui.form.on("Item", {
-	onload: function (frm) {
-		// frappe.db.get_single_value('Feature Settings', 'site_json').then(site_json => {
-		//     if (site_json) {
-		//         console.log("ok");
-		//         var site_json_object = JSON.parse(site_json);
-		//         if (site_json_object.enable_item_series === 1 && !frm.doc.item_code) {
+	onload(frm) {
+		if (!frm.is_new() || frm.doc.item_code) {
+			return;
+		}
+
 		frappe.db
 			.get_single_value("Extra Features Settings", "enable_item_numeric_autoname")
 			.then((enabled) => {
-				if (enabled) {
-					frappe.db
-						.get_list("Item", {
-							fields: ["name"],
-							order_by: "creation desc",
-							limit: 1,
-						})
-						.then((records) => {
-							if (records.length > 0) {
-								let last_item_code = records[0].name;
-								if (!isNaN(last_item_code)) {
-									frm.set_value(
-										"item_code",
-										(parseInt(last_item_code) + 1).toString()
-									);
-								}
-							}
-						});
+				if (!enabled) {
+					return;
 				}
+				return frappe
+					.call({ method: "mu_customers.api.get_next_item_code" })
+					.then((r) => {
+						if (r && r.message && !frm.doc.item_code) {
+							frm.set_value("item_code", r.message);
+						}
+					});
+			})
+			.catch(() => {
+				// A failed suggestion must never block creating an item.
 			});
 	},
-	// }
-	//     })
-	// }
 });

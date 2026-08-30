@@ -1,20 +1,31 @@
 import frappe
 
-from mu_customers.patches.v2_rename_branch_fields_on_customer import (
-	execute as execute_rename_branch_fields_on_customer,
-)
-
 
 def before_install():
-	delete_default_warehouse_from_invoices()
-	execute_rename_branch_fields_on_customer()
+	"""Nothing destructive runs here any more.
+
+	The previous version deleted seven Property Setters the app does not own,
+	including Purchase Invoice-bill_no-unique - the control that stops the same
+	supplier invoice being entered and paid twice. Layout preferences now ship
+	as fixtures instead of being enforced by deletion.
+	"""
+	pass
 
 
-def delete_default_warehouse_from_invoices():
-	frappe.delete_doc_if_exists("Property Setter", "Sales Order-set_warehouse-default")
-	frappe.delete_doc_if_exists("Property Setter", "Sales Invoice-set_warehouse-default")
-	frappe.delete_doc_if_exists("Property Setter", "Purchase Invoice-set_warehouse-default")
-	frappe.delete_doc_if_exists("Property Setter", "Delivery Note-set_warehouse-default")
-	frappe.delete_doc_if_exists("Property Setter", "Purchase Receipt-set_warehouse-default")
-	frappe.delete_doc_if_exists("Property Setter", "Purchase Order-set_warehouse-default")
-	frappe.delete_doc_if_exists("Property Setter", "Purchase Invoice-bill_no-unique")
+def after_install():
+	enable_supplier_invoice_uniqueness()
+
+
+def enable_supplier_invoice_uniqueness():
+	"""Turn on ERPNext's standard duplicate supplier-invoice guard.
+
+	This is the framework's own control (Accounts Settings ->
+	check_supplier_invoice_uniqueness): it blocks the same bill_no for the same
+	supplier within a fiscal year, without the cross-supplier false positives a
+	blanket unique index on bill_no would cause.
+	"""
+	if not frappe.db.exists("DocType", "Accounts Settings"):
+		return
+
+	if not frappe.db.get_single_value("Accounts Settings", "check_supplier_invoice_uniqueness"):
+		frappe.db.set_single_value("Accounts Settings", "check_supplier_invoice_uniqueness", 1)

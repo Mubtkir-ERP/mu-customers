@@ -6,27 +6,43 @@
  "engine": "InnoDB",
  "field_order": [
   "enable_item_qty_popup_si",
-  "enable_item_numeric_autoname"
+  "enable_item_numeric_autoname",
+  "enable_account_numeric_autoname",
+  "force_update_stock"
  ],
  "fields": [
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "enable_item_qty_popup_si",
    "fieldtype": "Check",
    "label": "Enable Item Qty Popup (Sales Invoice)"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "enable_item_numeric_autoname",
    "fieldtype": "Check",
    "label": "Enable Item Numeric Autoname"
+  },
+  {
+   "default": "1",
+   "description": "Name accounts as \"number - name - company abbreviation\" and number each child from its parent. Leave off to use ERPNext's standard account naming.",
+   "fieldname": "enable_account_numeric_autoname",
+   "fieldtype": "Check",
+   "label": "Enable Account Numeric Autoname"
+  },
+  {
+   "default": "1",
+   "description": "Lock Update Stock on Sales and Purchase Invoices so it cannot be cleared. Leave off to let staff untick it for service invoices. Either way a new invoice opens with it ticked.",
+   "fieldname": "force_update_stock",
+   "fieldtype": "Check",
+   "label": "Force Update Stock"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-21 16:13:29.948071",
+ "modified": "2026-08-21 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Mu Customers",
  "name": "Extra Features Settings",
