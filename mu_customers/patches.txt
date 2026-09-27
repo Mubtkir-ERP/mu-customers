@@ -26,3 +26,4 @@ mu_customers.patches.v11_drop_test_probe_column
 mu_customers.patches.v12_price_dropdown_needs_a_choice
 mu_customers.patches.v13_backfill_price_option_counts
 mu_customers.patches.v14_place_price_column_by_quantity
+mu_customers.patches.v15_cleanup_legacy_fields
