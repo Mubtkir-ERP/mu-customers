@@ -65,7 +65,6 @@ doctype_js = {
 		"public/js/sales_invoice.js",
 		"public/js/item_prices_select.js",
 		"public/js/customer_branches_sales.js",
-		"public/js/update_stock.js",
 	],
 	"Delivery Note": [
 		"public/js/transaction.js",
@@ -80,7 +79,6 @@ doctype_js = {
 	"Purchase Invoice": [
 		"public/js/transaction.js",
 		"public/js/item_prices_select.js",
-		"public/js/update_stock.js",
 	],
 	"Purchase Order": [
 		"public/js/transaction.js",
@@ -201,8 +199,6 @@ doc_events = {
 		"autoname": "mu_customers.events.item.custom_autoname",
 	},
 	"Account": {"autoname": "mu_customers.events.account_naming.custom_autoname"},
-	"Sales Invoice": {"validate": "mu_customers.events.invoice.force_update_stock"},
-	"Purchase Invoice": {"validate": "mu_customers.events.invoice.force_update_stock"},
 	"Stock Ledger Entry": {
 		"on_update": "mu_customers.events.stock_ledger_entry.update_item_qty_on_bin_change",
 	},
@@ -307,5 +303,18 @@ doc_events = {
 
 fixtures = [
 	{"dt": "Custom Field", "filters": [["module", "=", "Mu Customers"]]},
-	{"dt": "Property Setter", "filters": [["module", "=", "Mu Customers"]]},
+	{
+		"dt": "Property Setter",
+		"filters": [
+			["module", "=", "Mu Customers"],
+			[
+				"name",
+				"not in",
+				[
+					"Sales Invoice-update_stock-default",
+					"Purchase Invoice-update_stock-default",
+				],
+			],
+		],
+	},
 ]

@@ -1,8 +1,8 @@
 """The invoice note has to stay directly under the tax number.
 
 Staff read and write it there. It drifted to the end of the form once already,
-when custom_note was migrated into the standard `remarks` field, so its
-position is pinned by a test rather than left to whatever ERPNext ships.
+when custom_note was migrated into the standard `remarks` field. The legacy
+custom_note value is preserved separately but hidden from the invoice form.
 """
 
 import frappe

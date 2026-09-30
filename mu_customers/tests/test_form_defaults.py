@@ -2,8 +2,8 @@
 
 Three separate one-click-save failures are covered here: an Item refusing to
 save without a code, a Customer refusing to save because the default customer
-group was a group node, and Update Stock needing to default on while staying
-clearable unless it is explicitly locked.
+group was a group node, and Update Stock needing to default on while remaining
+a site-level Customize Form choice.
 """
 
 import frappe
@@ -22,87 +22,123 @@ def drop(doctype, name):
 
 
 class TestUpdateStockDefault(FrappeTestCase):
-	def test_new_invoice_opens_with_update_stock_ticked(self):
-		for doctype in STOCK_DOCTYPES:
-			with self.subTest(doctype=doctype):
-				self.assertEqual(frappe.new_doc(doctype).update_stock, 1)
-
-	def test_update_stock_is_not_read_only_on_the_doctype(self):
-		"""The lock is applied in the form from the setting, never baked in."""
-		for doctype in STOCK_DOCTYPES:
-			with self.subTest(doctype=doctype):
-				self.assertFalse(frappe.get_meta(doctype).get_field("update_stock").read_only)
-
-	def test_update_stock_can_still_be_cleared(self):
-		for doctype in STOCK_DOCTYPES:
-			with self.subTest(doctype=doctype):
-				doc = frappe.new_doc(doctype)
-				doc.update_stock = 0
-				self.assertEqual(doc.update_stock, 0)
-
-	def test_force_update_stock_setting_exists(self):
-		field = frappe.get_meta("Extra Features Settings").get_field("force_update_stock")
-		self.assertIsNotNone(field, "force_update_stock is missing from the settings")
-		self.assertEqual(field.fieldtype, "Check")
-		# The default is a business choice, so it is not asserted here. What
-		# matters is that the switch exists and that both positions work, which
-		# TestForceUpdateStockServerSide covers.
-		self.assertIn(field.default, ("0", "1"))
-
-
-class TestForceUpdateStockServerSide(FrappeTestCase):
-	"""The form lock is a UI state; an import or API call can still write 0.
-
-	These cover the server-side hook that closes that gap.
-	"""
+	"""Update Stock starts at 1 but remains a site-level Customize Form choice."""
 
 	def setUp(self):
-		self.original = frappe.db.get_single_value("Extra Features Settings", "force_update_stock")
-		self.addCleanup(self.set_force, self.original)
+		self.original = {}
+		for doctype in STOCK_DOCTYPES:
+			name = f"{doctype}-update_stock-default"
+			self.original[doctype] = frappe.db.get_value(
+				"Property Setter", name, ["name", "value", "module"], as_dict=True
+			)
+		self.addCleanup(self.restore_defaults)
 
-	def set_force(self, value):
-		settings = frappe.get_single("Extra Features Settings")
-		settings.force_update_stock = value
-		settings.save(ignore_permissions=True)
+	def restore_defaults(self):
+		for doctype in STOCK_DOCTYPES:
+			name = f"{doctype}-update_stock-default"
+			if frappe.db.exists("Property Setter", name):
+				frappe.delete_doc("Property Setter", name, force=True, ignore_permissions=True)
 
-	def invoice(self, doctype, update_stock, linked_field=None):
-		doc = frappe.new_doc(doctype)
-		doc.update_stock = update_stock
-		row = doc.append("items", {})
-		if linked_field:
-			row.set(linked_field, "SOME-LINKED-ROW")
-		return doc
+			original = self.original[doctype]
+			if original:
+				frappe.make_property_setter(
+					{
+						"doctype": doctype,
+						"doctype_or_field": "DocField",
+						"fieldname": "update_stock",
+						"property": "default",
+						"value": original.value,
+						"property_type": "Check",
+					},
+					is_system_generated=False,
+				)
+				frappe.db.set_value("Property Setter", name, "module", original.module)
+			frappe.clear_cache(doctype=doctype)
 
-	def force(self, doc):
-		from mu_customers.events.invoice import force_update_stock
+	def set_default(self, doctype, value):
+		frappe.make_property_setter(
+			{
+				"doctype": doctype,
+				"doctype_or_field": "DocField",
+				"fieldname": "update_stock",
+				"property": "default",
+				"value": str(int(value)),
+				"property_type": "Check",
+			},
+			is_system_generated=False,
+		)
+		frappe.clear_cache(doctype=doctype)
 
-		force_update_stock(doc)
-		return doc.update_stock
+	def test_initializer_creates_one_only_when_missing(self):
+		from mu_customers.install import ensure_update_stock_defaults
 
-	def test_setting_on_forces_a_cleared_flag_back_on(self):
-		self.set_force(1)
+		for doctype in STOCK_DOCTYPES:
+			name = f"{doctype}-update_stock-default"
+			if frappe.db.exists("Property Setter", name):
+				frappe.delete_doc("Property Setter", name, force=True, ignore_permissions=True)
+			frappe.clear_cache(doctype=doctype)
+
+		ensure_update_stock_defaults()
+
 		for doctype in STOCK_DOCTYPES:
 			with self.subTest(doctype=doctype):
-				self.assertEqual(self.force(self.invoice(doctype, 0)), 1)
+				self.assertEqual(
+					frappe.db.get_value(
+						"Property Setter", f"{doctype}-update_stock-default", "value"
+					),
+					"1",
+				)
+				self.assertEqual(frappe.new_doc(doctype).update_stock, 1)
 
-	def test_setting_off_leaves_a_cleared_flag_alone(self):
-		self.set_force(0)
+	def test_customize_form_zero_is_preserved(self):
+		from mu_customers.install import ensure_update_stock_defaults
+
 		for doctype in STOCK_DOCTYPES:
 			with self.subTest(doctype=doctype):
-				self.assertEqual(self.force(self.invoice(doctype, 0)), 0)
+				self.set_default(doctype, 0)
+				ensure_update_stock_defaults()
+				self.assertEqual(
+					frappe.db.get_value(
+						"Property Setter", f"{doctype}-update_stock-default", "value"
+					),
+					"0",
+				)
+				self.assertEqual(frappe.new_doc(doctype).update_stock, 0)
 
-	def test_an_already_ticked_flag_is_untouched(self):
-		self.set_force(1)
+	def test_update_stock_is_editable(self):
 		for doctype in STOCK_DOCTYPES:
 			with self.subTest(doctype=doctype):
-				self.assertEqual(self.force(self.invoice(doctype, 1)), 1)
+				field = frappe.get_meta(doctype).get_field("update_stock")
+				self.assertFalse(field.read_only)
 
-	def test_invoices_drawn_from_a_stock_document_are_skipped(self):
-		"""Those already moved the stock - forcing it on would post it twice."""
-		self.set_force(1)
-		for doctype, linked in (("Sales Invoice", "dn_detail"), ("Purchase Invoice", "pr_detail")):
+				doc = frappe.new_doc(doctype)
+				doc.update_stock = 0 if doc.update_stock else 1
+				self.assertIn(doc.update_stock, (0, 1))
+
+	def test_app_no_longer_forces_update_stock(self):
+		from mu_customers import hooks
+
+		self.assertIsNone(frappe.get_meta("Extra Features Settings").get_field("force_update_stock"))
+		self.assertNotIn("update_stock.js", str(hooks.doctype_js))
+
+		for doctype in STOCK_DOCTYPES:
 			with self.subTest(doctype=doctype):
-				self.assertEqual(self.force(self.invoice(doctype, 0, linked_field=linked)), 0)
+				events = hooks.doc_events.get(doctype, {})
+				self.assertNotIn("validate", events)
+
+	def test_update_stock_defaults_are_not_fixture_owned(self):
+		import json
+		import os
+
+		import mu_customers
+
+		path = os.path.join(os.path.dirname(mu_customers.__file__), "fixtures", "property_setter.json")
+		with open(path) as handle:
+			setters = json.load(handle)
+
+		names = {row.get("name") for row in setters}
+		for doctype in STOCK_DOCTYPES:
+			self.assertNotIn(f"{doctype}-update_stock-default", names)
 
 
 class TestCustomerGroupDefault(FrappeTestCase):

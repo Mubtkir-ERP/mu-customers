@@ -3,8 +3,8 @@
 Version 0.2.2 carried a `custom_note` Data field on Sales Invoice and Purchase
 Invoice, sitting immediately after the tax number, and that is where staff read
 and wrote it. The note was later migrated into ERPNext's standard `remarks`
-field and `custom_note` was dropped - which kept the data but moved the box to
-the very end of the form, inside Additional Info.
+field. The legacy `custom_note` field is now hidden rather than deleted so its
+historical values remain recoverable, while staff use `remarks` on the form.
 
 `remarks` is a standard field, so `insert_after` cannot move it; only a
 DocType-level `field_order` can. That order is computed here from the live meta

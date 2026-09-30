@@ -14,6 +14,7 @@ def before_install():
 
 def after_install():
 	enable_supplier_invoice_uniqueness()
+	ensure_update_stock_defaults()
 
 
 def enable_supplier_invoice_uniqueness():
@@ -29,3 +30,41 @@ def enable_supplier_invoice_uniqueness():
 
 	if not frappe.db.get_single_value("Accounts Settings", "check_supplier_invoice_uniqueness"):
 		frappe.db.set_single_value("Accounts Settings", "check_supplier_invoice_uniqueness", 1)
+
+
+UPDATE_STOCK_DOCTYPES = ("Sales Invoice", "Purchase Invoice")
+
+
+def ensure_update_stock_defaults():
+	"""Set Update Stock to 1 only when the site has no preference yet.
+
+	The Property Setter is deliberately *not* shipped as a fixture. That makes
+	the default a site-level choice: administrators can change it to 0 or back
+	to 1 from Customize Form and future app updates will not overwrite it.
+	"""
+	created = []
+
+	for doctype in UPDATE_STOCK_DOCTYPES:
+		name = f"{doctype}-update_stock-default"
+
+		# Existing means the site has already chosen its default (0 or 1).
+		if frappe.db.exists("Property Setter", name):
+			continue
+
+		frappe.make_property_setter(
+			{
+				"doctype": doctype,
+				"doctype_or_field": "DocField",
+				"fieldname": "update_stock",
+				"property": "default",
+				"value": "1",
+				"property_type": "Check",
+			},
+			is_system_generated=False,
+		)
+		frappe.db.set_value("Property Setter", name, "module", "Mu Customers")
+		frappe.clear_cache(doctype=doctype)
+		created.append(doctype)
+
+	return created
+

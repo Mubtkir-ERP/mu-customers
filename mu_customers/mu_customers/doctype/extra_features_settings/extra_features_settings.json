@@ -7,8 +7,7 @@
  "field_order": [
   "enable_item_qty_popup_si",
   "enable_item_numeric_autoname",
-  "enable_account_numeric_autoname",
-  "force_update_stock"
+  "enable_account_numeric_autoname"
  ],
  "fields": [
   {
@@ -29,13 +28,6 @@
    "fieldname": "enable_account_numeric_autoname",
    "fieldtype": "Check",
    "label": "Enable Account Numeric Autoname"
-  },
-  {
-   "default": "1",
-   "description": "Lock Update Stock on Sales and Purchase Invoices so it cannot be cleared. Leave off to let staff untick it for service invoices. Either way a new invoice opens with it ticked.",
-   "fieldname": "force_update_stock",
-   "fieldtype": "Check",
-   "label": "Force Update Stock"
   }
  ],
  "grid_page_length": 50,
