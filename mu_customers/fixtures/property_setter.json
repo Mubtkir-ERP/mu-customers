@@ -590,7 +590,7 @@
   "property_type": "Int",
   "row_name": null,
   "value": "2"
- }
+ },
  {
   "default_value": null,
   "doc_type": "Customer",
@@ -606,5 +606,5 @@
   "property_type": "Check",
   "row_name": null,
   "value": "1"
-}
+},
 ]
