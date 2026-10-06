@@ -227,7 +227,6 @@
   "unique": 0,
   "width": null
  },
-[
   {
     "allow_in_quick_entry": 1,
     "allow_on_submit": 0,
@@ -339,8 +338,7 @@
     "translatable": 1,
     "unique": 0,
     "width": null
-  }
-]
+  },
  {
   "allow_in_quick_entry": 0,
   "allow_on_submit": 0,
