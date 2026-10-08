@@ -93,10 +93,18 @@ doctype_js = {
 		"public/js/item_prices_select.js",
 	],
 	"Supplier Quotation": ["public/js/transaction.js"],
+	# زرّا "رابط الدخول السريع" على مستند User (يظهران لمن يملك كتابة على User).
+	"User": ["public/js/user_login_link.js"],
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+
+# المسار العام لرابط الدخول السريع.
+# الموظف يفتح /mu-login?token=... فيتحقق الخادم من الرمز وينشئ جلسته.
+website_route_rules = [
+	{"from_route": "/mu-login", "to_route": "mu_customers.login_link.login"},
+]
 
 # Svg Icons
 # ------------------
