@@ -100,11 +100,9 @@ doctype_js = {
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
-# المسار العام لرابط الدخول السريع.
-# الموظف يفتح /mu-login?token=... فيتحقق الخادم من الرمز وينشئ جلسته.
-website_route_rules = [
-	{"from_route": "/mu-login", "to_route": "mu_customers.login_link.login"},
-]
+# رابط الدخول السريع يعمل عبر نقطة الـ API مباشرة:
+# /api/method/mu_customers.login_link.login?token=...
+# لا حاجة لقاعدة مسار ويب — الدالة تتحقق من الرمز وتُحوّل الموظف للداخل.
 
 # Svg Icons
 # ------------------

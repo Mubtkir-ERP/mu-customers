@@ -18,8 +18,10 @@ import secrets
 from frappe import _
 from frappe.utils import now_datetime, add_to_date, get_url
 
-# المسار العام الذي يفتحه الموظف. يُسجَّل في hooks.py (website_route_rules).
-LOGIN_LINK_ROUTE = "/mu-login"
+# المسار العام الذي يفتحه الموظف: نقطة الـ API للدالة login أدناه.
+# نوجّه الرابط مباشرة إلى /api/method/... لأنها تُنفّذ كود بايثون وتُحوّل،
+# بينما website_route_rules مخصّصة لصفحات الويب لا للدوال.
+LOGIN_LINK_ROUTE = "/api/method/mu_customers.login_link.login"
 
 # طول الرمز العشوائي (بالبايت قبل التحويل لنص). 32 بايت = قوة عالية جداً.
 TOKEN_BYTES = 32
