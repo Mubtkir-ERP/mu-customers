@@ -72,15 +72,26 @@ frappe.ui.form.on("Sales Invoice Item", {
 				if (!enabled) {
 					return;
 				}
-				return frappe
-					.call({
-						method: "mu_customers.api.get_item_stock_levels",
-						args: { item_code: row.item_code },
-					})
-					.then((r) => {
-						if (r && r.message) {
-							return mu_show_stock_dialog(row.item_code, r.message);
+				// Only inventoried items have stock. Skip non-stock items
+				// (services, prepaid-voucher items, etc.) so selecting them no
+				// longer pops up a pointless "No stock found for this item."
+				return frappe.db
+					.get_value("Item", row.item_code, "is_stock_item")
+					.then((res) => {
+						const is_stock = !!(res && res.message && res.message.is_stock_item);
+						if (!is_stock) {
+							return;
 						}
+						return frappe
+							.call({
+								method: "mu_customers.api.get_item_stock_levels",
+								args: { item_code: row.item_code },
+							})
+							.then((r) => {
+								if (r && r.message) {
+									return mu_show_stock_dialog(row.item_code, r.message);
+								}
+							});
 					});
 			})
 		);
