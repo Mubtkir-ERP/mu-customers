@@ -58,16 +58,15 @@ def reorder_fields(order, doctype, anchor=None):
 		order.remove("taxes_and_charges")
 		order.insert(order.index("base_total"), "taxes_and_charges")
 
-	# 3. Payments table full width under section_break_42 (Sales Invoice and Purchase Invoice)
-	if doctype in ("Sales Invoice", "Purchase Invoice"):
-		if "payments" in order and "section_break_42" in order:
-			order.remove("payments")
-			order.insert(order.index("section_break_42") + 1, "payments")
+	# 3. Payments table full width under items table across all documents
+	if "payments" in order and "items" in order:
+		order.remove("payments")
+		order.insert(order.index("items") + 1, "payments")
 
-		# 4. Paid Amount under grand_total
-		if "paid_amount" in order and "grand_total" in order:
-			order.remove("paid_amount")
-			order.insert(order.index("grand_total") + 1, "paid_amount")
+	# 4. Paid Amount under grand_total
+	if "paid_amount" in order and "grand_total" in order:
+		order.remove("paid_amount")
+		order.insert(order.index("grand_total") + 1, "paid_amount")
 
 	return order
 

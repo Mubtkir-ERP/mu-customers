@@ -64,19 +64,19 @@ class TestInvoiceNotePosition(FrappeTestCase):
 						)
 
 	def test_payments_and_paid_amount_positions(self):
-		from mu_customers.invoice_note_position import reorder_fields
+		from mu_customers.invoice_note_position import ALL_TARGET_DOCTYPES, reorder_fields
 
-		for doctype in ("Sales Invoice", "Purchase Invoice"):
+		for doctype in ALL_TARGET_DOCTYPES:
 			if not frappe.db.exists("DocType", doctype):
 				continue
 			order = self.order(doctype)
 			reordered = reorder_fields(list(order), doctype)
-			if "payments" in order and "section_break_42" in order:
+			if "payments" in order and "items" in order:
 				with self.subTest(doctype=doctype, field="payments"):
 					self.assertEqual(
-						reordered[reordered.index("section_break_42") + 1],
+						reordered[reordered.index("items") + 1],
 						"payments",
-						f"{doctype}: payments table must sit directly under section_break_42 (full width)",
+						f"{doctype}: payments table must sit directly under items table",
 					)
 			if "paid_amount" in order and "grand_total" in order:
 				with self.subTest(doctype=doctype, field="paid_amount"):
