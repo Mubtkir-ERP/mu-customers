@@ -15,6 +15,13 @@ def before_install():
 def after_install():
 	enable_supplier_invoice_uniqueness()
 	ensure_update_stock_defaults()
+	apply_field_ordering()
+
+
+def apply_field_ordering():
+	from mu_customers.invoice_note_position import apply
+
+	apply()
 
 
 def enable_supplier_invoice_uniqueness():

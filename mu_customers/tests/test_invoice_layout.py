@@ -42,6 +42,50 @@ class TestInvoiceNotePosition(FrappeTestCase):
 				self.assertEqual(before, set(after), "the reorder dropped or added a field")
 				self.assertEqual(len(after), len(set(after)), "the reorder duplicated a field")
 
+	def test_taxes_and_charges_sits_above_base_total(self):
+		from mu_customers.invoice_note_position import ALL_TARGET_DOCTYPES, reorder_fields
+
+		for doctype in ALL_TARGET_DOCTYPES:
+			if not frappe.db.exists("DocType", doctype):
+				continue
+			order = self.order(doctype)
+			if "taxes_and_charges" in order and "base_total" in order:
+				with self.subTest(doctype=doctype):
+					reordered = reorder_fields(list(order), doctype)
+					self.assertEqual(
+						reordered[reordered.index("base_total") - 1],
+						"taxes_and_charges",
+						f"{doctype}: taxes_and_charges must sit directly above base_total",
+					)
+					if "column_break_32" in reordered:
+						self.assertLess(
+							reordered.index("column_break_32"),
+							reordered.index("taxes_and_charges"),
+						)
+
+	def test_payments_and_paid_amount_positions(self):
+		from mu_customers.invoice_note_position import reorder_fields
+
+		for doctype in ("Sales Invoice", "Purchase Invoice"):
+			if not frappe.db.exists("DocType", doctype):
+				continue
+			order = self.order(doctype)
+			reordered = reorder_fields(list(order), doctype)
+			if "payments" in order and "section_break_42" in order:
+				with self.subTest(doctype=doctype, field="payments"):
+					self.assertEqual(
+						reordered[reordered.index("section_break_42") + 1],
+						"payments",
+						f"{doctype}: payments table must sit directly under section_break_42 (full width)",
+					)
+			if "paid_amount" in order and "grand_total" in order:
+				with self.subTest(doctype=doctype, field="paid_amount"):
+					self.assertEqual(
+						reordered[reordered.index("grand_total") + 1],
+						"paid_amount",
+						f"{doctype}: paid_amount must sit directly under grand_total",
+					)
+
 
 class TestBranchFieldsSurviveTheReorder(FrappeTestCase):
 	"""The reorder must not disturb what earlier rounds put on these forms."""

@@ -142,6 +142,7 @@ doctype_js = {
 # a rename patch here *and* again from patches.txt on every install.
 before_install = "mu_customers.install.before_install"
 after_install = "mu_customers.install.after_install"
+after_migrate = "mu_customers.invoice_note_position.apply"
 
 # Uninstallation
 # ------------
@@ -313,6 +314,7 @@ fixtures = [
 		"dt": "Property Setter",
 		"filters": [
 			["module", "=", "Mu Customers"],
+			["property", "!=", "field_order"],
 			[
 				"name",
 				"not in",

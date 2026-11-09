@@ -9,7 +9,7 @@ import frappe
 # IMPORTANT: the legacy custom_note value itself is NOT deleted. The field is
 # hidden from Desk by v17_hide_invoice_custom_note_preserve_data, but its stored
 # value stays available as a historical backup.
-CANDIDATES = ("Sales Invoice", "Purchase Invoice")
+CANDIDATES = ("Sales Invoice", "Purchase Invoice", "Sales Order", "Purchase Order")
 
 
 def overwrite_remarks_from_custom_note(doctype):

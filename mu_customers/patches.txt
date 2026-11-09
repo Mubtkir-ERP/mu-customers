@@ -31,3 +31,4 @@ mu_customers.patches.v16_make_update_stock_default_site_configurable
 
 mu_customers.patches.v17_hide_invoice_custom_note_preserve_data
 mu_customers.patches.v18_custom_note_overrides_invoice_remarks
+mu_customers.patches.v19_reorder_payments_and_tax_template
