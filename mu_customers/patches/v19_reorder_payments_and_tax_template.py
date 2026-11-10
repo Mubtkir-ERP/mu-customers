@@ -84,7 +84,8 @@ def clear_default_remarks_in_db():
 			f"""
 			UPDATE `tab{dt}`
 			SET remarks = NULL
-			WHERE remarks IN ('No Remarks', 'No remarks', 'لا ملاحظات')
+			WHERE TRIM(LOWER(remarks)) = 'no remarks'
+			   OR TRIM(remarks) = 'لا ملاحظات'
 			"""
 		)
 
