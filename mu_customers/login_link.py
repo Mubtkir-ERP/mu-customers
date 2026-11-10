@@ -45,15 +45,15 @@ def generate(user: str, validity_days=None):
 	_ensure_can_manage()
 
 	if not user or not frappe.db.exists("User", user):
-		frappe.throw(_("المستخدم غير موجود"))
+		frappe.throw(_("User does not exist"))
 
 	# منع توليد رابط لحسابات النظام الحسّاسة.
 	if user in ("Administrator", "Guest"):
-		frappe.throw(_("لا يمكن إنشاء رابط دخول سريع لهذا الحساب"))
+		frappe.throw(_("Cannot create a login link for this account"))
 
 	user_doc = frappe.get_doc("User", user)
 	if not user_doc.enabled:
-		frappe.throw(_("حساب المستخدم معطّل"))
+		frappe.throw(_("User account is disabled"))
 
 	# تحديد المدة: نقرأ من الوسيط، وإلا من حقل المستخدم، وإلا 0 (دائم).
 	if validity_days is None or validity_days == "":
@@ -103,7 +103,7 @@ def revoke(user: str):
 	_ensure_can_manage()
 
 	if not user or not frappe.db.exists("User", user):
-		frappe.throw(_("المستخدم غير موجود"))
+		frappe.throw(_("User does not exist"))
 
 	frappe.db.set_value(
 		"User",
@@ -204,4 +204,4 @@ def _ensure_can_manage():
 		return
 	if frappe.has_permission("User", "write"):
 		return
-	frappe.throw(_("غير مصرّح لك بإنشاء روابط دخول"), frappe.PermissionError)
+	frappe.throw(_("Not permitted to manage login links"), frappe.PermissionError)

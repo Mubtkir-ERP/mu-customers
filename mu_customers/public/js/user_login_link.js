@@ -1,37 +1,37 @@
-// زرّا "رابط الدخول السريع" على مستند User.
+// Quick login link buttons on the User document.
 // ------------------------------------------------------------------
-// يظهران فقط لـ Administrator أو من يملك صلاحية كتابة على User.
-// حقل المدة (custom_login_link_validity_days): 0 = دائم حتى الإلغاء.
+// Visible only to Administrator or users with write permission on User.
+// Validity days (custom_login_link_validity_days): 0 = permanent until revoked.
 
 frappe.ui.form.on("User", {
 	refresh(frm) {
-		// لا نعرض شيئاً لمستخدم جديد غير محفوظ، ولا للحسابات النظامية.
+		// Do not show for new unsaved users or system accounts.
 		if (frm.is_new()) return;
 		if (["Administrator", "Guest"].includes(frm.doc.name)) return;
 
-		// الصلاحية: Administrator أو من يملك كتابة على User.
+		// Permissions: Administrator or has write permission on User.
 		const can_manage =
 			frappe.session.user === "Administrator" ||
 			frappe.perm.has_perm("User", 0, "write");
 		if (!can_manage) return;
 
-		const group = __("رابط الدخول السريع");
+		const group = __("Quick Login Link");
 
-		// زر: إنشاء / تحديث الرابط
+		// Button: Generate / update link
 		frm.add_custom_button(
-			__("إنشاء رابط دخول"),
+			__("Create Login Link"),
 			() => mu_generate_login_link(frm),
 			group
 		);
 
-		// زر: إلغاء الرابط
+		// Button: Revoke link
 		frm.add_custom_button(
-			__("إلغاء الرابط"),
+			__("Revoke Login Link"),
 			() => mu_revoke_login_link(frm),
 			group
 		);
 
-		// مؤشّر حالة الرابط الحالي (موجود/منتهٍ/لا يوجد).
+		// Show status indicator of current link (active / expired / none).
 		mu_show_link_indicator(frm);
 	},
 });
@@ -44,7 +44,7 @@ function mu_generate_login_link(frm) {
 			validity_days: frm.doc.custom_login_link_validity_days || 0,
 		},
 		freeze: true,
-		freeze_message: __("جارٍ إنشاء الرابط..."),
+		freeze_message: __("Generating login link..."),
 		callback(r) {
 			if (!r.message) return;
 			mu_render_link_dialog(frm, r.message);
@@ -55,7 +55,7 @@ function mu_generate_login_link(frm) {
 
 function mu_revoke_login_link(frm) {
 	frappe.confirm(
-		__("سيتم إبطال الرابط الحالي فوراً. هل أنت متأكد؟"),
+		__("Current login link will be revoked immediately. Are you sure?"),
 		() => {
 			frappe.call({
 				method: "mu_customers.login_link.revoke",
@@ -63,7 +63,7 @@ function mu_revoke_login_link(frm) {
 				freeze: true,
 				callback() {
 					frappe.show_alert(
-						{ message: __("تم إلغاء الرابط"), indicator: "orange" },
+						{ message: __("Login link revoked"), indicator: "orange" },
 						4
 					);
 					frm.reload_doc();
@@ -75,11 +75,11 @@ function mu_revoke_login_link(frm) {
 
 function mu_render_link_dialog(frm, data) {
 	const expiry_text = data.permanent
-		? __("دائم (لا ينتهي حتى الإلغاء اليدوي)")
-		: __("ينتهي في: ") + frappe.datetime.str_to_user(data.expiry);
+		? __("Permanent (Valid until revoked)")
+		: __("Expires on: {0}", [frappe.datetime.str_to_user(data.expiry)]);
 
 	const d = new frappe.ui.Dialog({
-		title: __("رابط الدخول السريع لـ ") + (data.full_name || data.user),
+		title: __("Quick Login Link for {0}", [data.full_name || data.user]),
 		fields: [
 			{
 				fieldname: "link_html",
@@ -91,25 +91,24 @@ function mu_render_link_dialog(frm, data) {
 						font-family:monospace;font-size:12px;margin-bottom:10px">
 						${frappe.utils.escape_html(data.link)}
 					</div>
-					<div style="direction:rtl;color:#8d99a6;font-size:12px">
+					<div style="color:#8d99a6;font-size:12px">
 						${frappe.utils.escape_html(expiry_text)}
 					</div>
 				`,
 			},
 		],
-		primary_action_label: __("نسخ الرابط"),
+		primary_action_label: __("Copy Link"),
 		primary_action() {
 			navigator.clipboard
 				.writeText(data.link)
 				.then(() =>
 					frappe.show_alert(
-						{ message: __("تم نسخ الرابط"), indicator: "green" },
+						{ message: __("Login link copied to clipboard"), indicator: "green" },
 						3
 					)
 				)
 				.catch(() => {
-					// متصفحات قديمة: اختيار يدوي.
-					frappe.msgprint(__("انسخ الرابط يدوياً من الصندوق أعلاه"));
+					frappe.msgprint(__("Copy the link manually from the box above"));
 				});
 		},
 	});
@@ -124,19 +123,20 @@ function mu_show_link_indicator(frm) {
 			const s = r.message || {};
 			if (!s.exists) {
 				frm.dashboard.set_headline_alert(
-					__("لا يوجد رابط دخول سريع لهذا المستخدم"),
+					__("No quick login link found for this user"),
 					"gray"
 				);
 			} else if (s.expired) {
 				frm.dashboard.set_headline_alert(
-					__("رابط الدخول السريع منتهي الصلاحية — أنشئ رابطاً جديداً"),
+					__("Quick login link expired — please generate a new one"),
 					"red"
 				);
 			} else {
 				const txt = s.permanent
-					? __("يوجد رابط دخول سريع فعّال (دائم)")
-					: __("يوجد رابط دخول سريع فعّال — ينتهي: ") +
-					  frappe.datetime.str_to_user(s.expiry);
+					? __("Active quick login link exists (Permanent)")
+					: __("Active quick login link exists — Expires: {0}", [
+							frappe.datetime.str_to_user(s.expiry),
+					  ]);
 				frm.dashboard.set_headline_alert(txt, "green");
 			}
 		},

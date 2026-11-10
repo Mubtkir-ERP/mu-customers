@@ -41,3 +41,15 @@ def is_linked_to_stock_document(doc):
 		return False
 
 	return any(row.get(field) for row in (doc.get("items") or []))
+
+
+def clear_default_remarks(doc, method=None):
+	"""Clear ERPNext's automatic 'No Remarks' filler so remarks stays empty unless user entered text."""
+	if doc.get("remarks") in (
+		"No Remarks",
+		"No remarks",
+		"لا ملاحظات",
+		frappe._("No Remarks"),
+		frappe._("No remarks"),
+	):
+		doc.remarks = ""

@@ -209,6 +209,30 @@ doc_events = {
 	"Stock Ledger Entry": {
 		"on_update": "mu_customers.events.stock_ledger_entry.update_item_qty_on_bin_change",
 	},
+	"Sales Invoice": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Purchase Invoice": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Sales Order": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Purchase Order": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Delivery Note": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Purchase Receipt": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Quotation": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
+	"Supplier Quotation": {
+		"validate": "mu_customers.events.invoice.clear_default_remarks",
+	},
 }
 
 # Scheduled Tasks

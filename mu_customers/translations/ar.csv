@@ -1,0 +1,23 @@
+Quick Login Link,رابط الدخول السريع
+Create Login Link,إنشاء رابط دخول
+Revoke Login Link,إلغاء الرابط
+Copy Link,نسخ الرابط
+Login link copied to clipboard,تم نسخ الرابط
+Current login link will be revoked immediately. Are you sure?,سيتم إبطال الرابط الحالي فوراً. هل أنت متأكد؟
+Login link revoked,تم إلغاء الرابط
+Generating login link...,جارٍ إنشاء الرابط...
+Permanent (Valid until revoked),دائم (لا ينتهي حتى الإلغاء اليدوي)
+Expires on: {0},ينتهي في: {0}
+No quick login link found for this user,لا يوجد رابط دخول سريع لهذا المستخدم
+Quick login link expired — please generate a new one,رابط الدخول السريع منتهي الصلاحية — أنشئ رابطاً جديداً
+Active quick login link exists (Permanent),يوجد رابط دخول سريع فعّال (دائم)
+Active quick login link exists — Expires: {0},يوجد رابط دخول سريع فعّال — ينتهي: {0}
+Copy the link manually from the box above,انسخ الرابط يدوياً من الصندوق أعلاه
+Quick Login Link for {0},رابط الدخول السريع لـ {0}
+Link Validity (Days),مدة صلاحية الرابط (أيام)
+Login Link Hash (System),بصمة رابط الدخول (نظام)
+Login Link Expiry (System),تاريخ انتهاء الرابط (نظام)
+User does not exist,المستخدم غير موجود
+Cannot create a login link for this account,لا يمكن إنشاء رابط دخول سريع لهذا الحساب
+User account is disabled,حساب المستخدم معطّل
+Not permitted to manage login links,غير مصرّح لك بإنشاء روابط دخول

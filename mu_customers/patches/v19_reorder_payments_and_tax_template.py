@@ -67,9 +67,55 @@ def update_print_formats():
 	return updated
 
 
+def clear_default_remarks_in_db():
+	"""Clear legacy default remarks ('No Remarks', 'لا ملاحظات') from database."""
+	for dt in (
+		"Sales Invoice",
+		"Purchase Invoice",
+		"Sales Order",
+		"Purchase Order",
+		"Delivery Note",
+		"Purchase Receipt",
+		"Quotation",
+	):
+		if not frappe.db.table_exists(dt) or not frappe.db.has_column(dt, "remarks"):
+			continue
+		frappe.db.sql(
+			f"""
+			UPDATE `tab{dt}`
+			SET remarks = NULL
+			WHERE remarks IN ('No Remarks', 'No remarks', 'لا ملاحظات')
+			"""
+		)
+
+
+def ensure_remarks_default_empty():
+	"""Set default value of remarks to empty string."""
+	for dt in ("Sales Invoice", "Purchase Invoice"):
+		if not frappe.db.exists("DocType", dt):
+			continue
+		ps_name = f"{dt}-remarks-default"
+		if not frappe.db.exists("Property Setter", ps_name):
+			frappe.make_property_setter(
+				{
+					"doctype": dt,
+					"doctype_or_field": "DocField",
+					"fieldname": "remarks",
+					"property": "default",
+					"value": "",
+					"property_type": "Text",
+				},
+				is_system_generated=False,
+			)
+			frappe.db.set_value("Property Setter", ps_name, "module", "Mu Customers")
+
+
 def execute():
 	for dt in CANDIDATES:
 		overwrite_remarks_from_custom_note(dt)
+
+	clear_default_remarks_in_db()
+	ensure_remarks_default_empty()
 
 	updated_pfs = update_print_formats()
 	if updated_pfs:

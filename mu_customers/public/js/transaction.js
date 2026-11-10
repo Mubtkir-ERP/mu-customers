@@ -31,9 +31,26 @@ function mu_show_net_total(frm) {
 	}
 }
 
+function mu_clear_default_remarks(frm) {
+	const val = frm.doc.remarks;
+	if (
+		val === "No Remarks" ||
+		val === "No remarks" ||
+		val === "لا ملاحظات" ||
+		val === __("No Remarks") ||
+		val === __("No remarks")
+	) {
+		frm.set_value("remarks", "");
+	}
+}
+
 MU_TXN_DOCTYPES.forEach((doctype) => {
 	frappe.ui.form.on(doctype, {
-		refresh: mu_show_net_total,
+		onload: mu_clear_default_remarks,
+		refresh(frm) {
+			mu_show_net_total(frm);
+			mu_clear_default_remarks(frm);
+		},
 		currency: mu_show_net_total,
 		company: mu_show_net_total,
 	});
