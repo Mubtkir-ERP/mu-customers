@@ -210,27 +210,35 @@ doc_events = {
 		"on_update": "mu_customers.events.stock_ledger_entry.update_item_qty_on_bin_change",
 	},
 	"Sales Invoice": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Purchase Invoice": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Sales Order": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Purchase Order": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Delivery Note": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Purchase Receipt": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Quotation": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 	"Supplier Quotation": {
+		"onload": "mu_customers.events.invoice.clean_remarks_onload",
 		"validate": "mu_customers.events.invoice.clear_default_remarks",
 	},
 }

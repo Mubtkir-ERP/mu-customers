@@ -51,8 +51,25 @@ def clear_default_remarks(doc, method=None):
 	if doc.get("remarks") in (
 		"No Remarks",
 		"No remarks",
+		"no remarks",
 		"لا ملاحظات",
 		frappe._("No Remarks"),
 		frappe._("No remarks"),
 	):
 		doc.remarks = ""
+
+
+def clean_remarks_onload(doc, method=None):
+	"""Ensure default placeholder remarks are empty when loading document in Desk without dirtying form."""
+	val = doc.get("remarks")
+	if val in (
+		"No Remarks",
+		"No remarks",
+		"no remarks",
+		"لا ملاحظات",
+		frappe._("No Remarks"),
+		frappe._("No remarks"),
+	):
+		doc.remarks = ""
+		if doc.name and not doc.is_new():
+			frappe.db.set_value(doc.doctype, doc.name, "remarks", None, update_modified=False)

@@ -39,11 +39,13 @@ function mu_clear_default_remarks(frm) {
 	if (
 		val === "No Remarks" ||
 		val === "No remarks" ||
+		val === "no remarks" ||
 		val === "لا ملاحظات" ||
 		val === __("No Remarks") ||
 		val === __("No remarks")
 	) {
-		frm.set_value("remarks", "");
+		frm.doc.remarks = "";
+		frm.refresh_field("remarks");
 	}
 }
 
