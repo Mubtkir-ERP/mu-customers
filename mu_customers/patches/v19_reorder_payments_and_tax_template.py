@@ -91,7 +91,7 @@ def clear_default_remarks_in_db():
 
 
 def ensure_remarks_default_empty():
-	"""Set default value of remarks to empty string."""
+	"""Set default value of remarks to empty string and allow on submit."""
 	for dt in ("Sales Invoice", "Purchase Invoice"):
 		if not frappe.db.exists("DocType", dt):
 			continue
@@ -109,6 +109,21 @@ def ensure_remarks_default_empty():
 				is_system_generated=False,
 			)
 			frappe.db.set_value("Property Setter", ps_name, "module", "Mu Customers")
+
+		ps_sub = f"{dt}-remarks-allow_on_submit"
+		if not frappe.db.exists("Property Setter", ps_sub):
+			frappe.make_property_setter(
+				{
+					"doctype": dt,
+					"doctype_or_field": "DocField",
+					"fieldname": "remarks",
+					"property": "allow_on_submit",
+					"value": "1",
+					"property_type": "Check",
+				},
+				is_system_generated=False,
+			)
+			frappe.db.set_value("Property Setter", ps_sub, "module", "Mu Customers")
 
 
 def execute():

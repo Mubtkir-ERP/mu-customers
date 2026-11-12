@@ -45,6 +45,9 @@ def is_linked_to_stock_document(doc):
 
 def clear_default_remarks(doc, method=None):
 	"""Clear ERPNext's automatic 'No Remarks' filler so remarks stays empty unless user entered text."""
+	if doc.docstatus != 0:
+		return
+
 	if doc.get("remarks") in (
 		"No Remarks",
 		"No remarks",

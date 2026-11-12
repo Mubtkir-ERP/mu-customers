@@ -32,6 +32,9 @@ function mu_show_net_total(frm) {
 }
 
 function mu_clear_default_remarks(frm) {
+	// Only run on brand new, unsaved documents (never touch existing, submitted, or cancelled documents).
+	if (!frm || !frm.is_new() || frm.doc.docstatus !== 0) return;
+
 	const val = frm.doc.remarks;
 	if (
 		val === "No Remarks" ||
