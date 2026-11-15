@@ -25,7 +25,7 @@ required_apps = ["erpnext"]
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/mu_customers/css/full_width.css"
+# app_include_css = "/assets/mu_customers/css/mu_customers.css"
 # app_include_js = "/assets/mu_customers/js/mu_customers.js"
 
 # include js, css files in header of web template
@@ -53,7 +53,6 @@ app_include_js = [
 	# Quick entry controllers have to be registered before the dialog is opened
 	# from anywhere in the desk, so they cannot live under doctype_js.
 	"/assets/mu_customers/js/item_quick_entry.js",
-	"/assets/mu_customers/js/full_width.js",
 ]
 
 doctype_js = {
