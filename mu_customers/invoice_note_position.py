@@ -150,10 +150,28 @@ def setup_sales_customizations():
 				)
 
 
+def remove_extra_notes_fields():
+	"""Remove unwanted custom 'notes' / 'custom_notes' fields from transaction doctypes while keeping 'remarks'."""
+	for dt in ALL_TARGET_DOCTYPES:
+		for fn in ("notes", "custom_notes"):
+			cf_name = f"{dt}-{fn}"
+			if frappe.db.exists("Custom Field", cf_name):
+				frappe.delete_doc("Custom Field", cf_name, ignore_permissions=True, force=True)
+
+
 def reorder_customer_fields():
-	"""Place custom_vat_registration_number under customer_group, and custom_commercial_register_no under custom_vat_registration_number."""
+	"""Place custom_vat_registration_number under customer_group, custom_commercial_register_no under custom_vat_registration_number, and keep custom_additional_ids inside Customer IDs section."""
 	if not frappe.db.exists("DocType", "Customer"):
 		return
+
+	# Find the Customer IDs section break fieldname
+	meta = frappe.get_meta("Customer")
+	customer_ids_sec = "custom_section_break_nxdgf"
+	if not (meta.has_field(customer_ids_sec) or frappe.db.exists("Custom Field", f"Customer-{customer_ids_sec}")):
+		for df in meta.fields:
+			if df.fieldtype == "Section Break" and (df.label or "").strip().lower() in ("customer ids", "customer id"):
+				customer_ids_sec = df.fieldname
+				break
 
 	# Update insert_after on Custom Fields if they exist
 	if frappe.db.exists("Custom Field", "Customer-custom_vat_registration_number"):
@@ -162,6 +180,10 @@ def reorder_customer_fields():
 	if frappe.db.exists("Custom Field", "Customer-custom_commercial_register_no"):
 		frappe.db.set_value("Custom Field", "Customer-custom_commercial_register_no", "insert_after", "custom_vat_registration_number")
 
+	if frappe.db.exists("Custom Field", "Customer-custom_additional_ids") and customer_ids_sec:
+		frappe.db.set_value("Custom Field", "Customer-custom_additional_ids", "insert_after", customer_ids_sec)
+
+	frappe.clear_cache(doctype="Customer")
 	meta = frappe.get_meta("Customer")
 	order = [df.fieldname for df in meta.fields]
 	if not order or "customer_group" not in order:
@@ -177,6 +199,11 @@ def reorder_customer_fields():
 		order.remove("custom_commercial_register_no")
 		anchor = "custom_vat_registration_number" if "custom_vat_registration_number" in order else "customer_group"
 		order.insert(order.index(anchor) + 1, "custom_commercial_register_no")
+		changed = True
+
+	if "custom_additional_ids" in order and customer_ids_sec in order:
+		order.remove("custom_additional_ids")
+		order.insert(order.index(customer_ids_sec) + 1, "custom_additional_ids")
 		changed = True
 
 	if changed:
@@ -248,6 +275,7 @@ def setup_customer_collapsible_sections():
 
 def apply(doctype=None):
 	"""Write the field_order property setter for target doctypes and hide custom_notes."""
+	remove_extra_notes_fields()
 	hide_custom_notes()
 	setup_sales_customizations()
 	reorder_customer_fields()
