@@ -1,0 +1,24 @@
+/* Full Width layout for Desk by default */
+body.full-width .container,
+body.full-width .page-container,
+body.full-width .layout-main-section,
+body.full-width .layout-main-section-wrapper,
+body.full-width .container.page-body,
+body.full-width .std-form-layout .section-head, 
+body.full-width .std-form-layout .section-body, 
+body.full-width .form-footer {
+	max-width: 100% !important;
+	width: 100% !important;
+}
+
+.layout-main-section-wrapper,
+.page-container .page-body {
+	max-width: 100% !important;
+	width: 100% !important;
+}
+
+.std-form-layout .section-head,
+.std-form-layout .section-body,
+.form-footer {
+	max-width: 100% !important;
+}

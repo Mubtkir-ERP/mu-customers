@@ -32,25 +32,50 @@ function mu_show_net_total(frm) {
 }
 
 function mu_clear_default_remarks(frm) {
-	// Only run on brand new, unsaved documents (never touch existing, submitted, or cancelled documents).
-	if (!frm || !frm.is_new() || frm.doc.docstatus !== 0) return;
+	if (!frm || !frm.doc) return;
 
-	const val = frm.doc.remarks;
-	if (
-		val === "No Remarks" ||
-		val === "No remarks" ||
-		val === "no remarks" ||
+	const raw = frm.doc.remarks;
+	if (!raw) return;
+
+	const val = String(raw).trim().replace(/[.:]$/, "");
+	const is_default = (
+		val.toLowerCase() === "no remarks" ||
 		val === "لا ملاحظات" ||
+		val === "لا توجد ملاحظات" ||
 		val === __("No Remarks") ||
 		val === __("No remarks")
-	) {
+	);
+
+	if (is_default) {
 		frm.doc.remarks = "";
-		frm.refresh_field("remarks");
+		if (frm.is_new() && frm.doc.docstatus === 0) {
+			frm.refresh_field("remarks");
+		} else if (frm.fields_dict.remarks && frm.fields_dict.remarks.set_input) {
+			// Clears the input in the DOM without triggering frm.dirty() or CannotChangeAfterSubmit
+			frm.fields_dict.remarks.set_input("");
+		}
 	}
 }
 
+function mu_fetch_vat_from_customer(frm) {
+	if (frm.doc.customer && frm.fields_dict.tax_id) {
+		frappe.db.get_value("Customer", frm.doc.customer, "custom_vat_registration_number", function (r) {
+			if (r && r.custom_vat_registration_number) {
+				frm.set_value("tax_id", r.custom_vat_registration_number);
+			}
+		});
+	}
+}
+
+const SELLING_DOCTYPES = [
+	"Sales Invoice",
+	"Sales Order",
+	"Delivery Note",
+	"Quotation",
+];
+
 MU_TXN_DOCTYPES.forEach((doctype) => {
-	frappe.ui.form.on(doctype, {
+	const handlers = {
 		onload: mu_clear_default_remarks,
 		refresh(frm) {
 			mu_show_net_total(frm);
@@ -58,5 +83,11 @@ MU_TXN_DOCTYPES.forEach((doctype) => {
 		},
 		currency: mu_show_net_total,
 		company: mu_show_net_total,
-	});
+	};
+
+	if (SELLING_DOCTYPES.includes(doctype)) {
+		handlers.customer = mu_fetch_vat_from_customer;
+	}
+
+	frappe.ui.form.on(doctype, handlers);
 });

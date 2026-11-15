@@ -43,33 +43,30 @@ def is_linked_to_stock_document(doc):
 	return any(row.get(field) for row in (doc.get("items") or []))
 
 
+def is_default_remarks(val):
+	"""Check if the remarks value is ERPNext's default placeholder."""
+	if not val:
+		return False
+	val_str = str(val).strip()
+	val_clean = val_str.rstrip(".: ").lower()
+	return (
+		val_clean in ("no remarks", "لا ملاحظات", "لا توجد ملاحظات")
+		or val_str in (frappe._("No Remarks"), frappe._("No remarks"))
+	)
+
+
 def clear_default_remarks(doc, method=None):
 	"""Clear ERPNext's automatic 'No Remarks' filler so remarks stays empty unless user entered text."""
 	if doc.docstatus != 0:
 		return
 
-	if doc.get("remarks") in (
-		"No Remarks",
-		"No remarks",
-		"no remarks",
-		"لا ملاحظات",
-		frappe._("No Remarks"),
-		frappe._("No remarks"),
-	):
+	if is_default_remarks(doc.get("remarks")):
 		doc.remarks = ""
 
 
 def clean_remarks_onload(doc, method=None):
 	"""Ensure default placeholder remarks are empty when loading document in Desk without dirtying form."""
-	val = doc.get("remarks")
-	if val in (
-		"No Remarks",
-		"No remarks",
-		"no remarks",
-		"لا ملاحظات",
-		frappe._("No Remarks"),
-		frappe._("No remarks"),
-	):
+	if is_default_remarks(doc.get("remarks")):
 		doc.remarks = ""
 		if doc.name and not doc.is_new():
 			frappe.db.set_value(doc.doctype, doc.name, "remarks", None, update_modified=False)

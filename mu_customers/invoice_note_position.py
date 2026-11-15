@@ -21,10 +21,13 @@ import json
 
 import frappe
 
-# Where 0.2.2 put the note on each invoice.
+# Where the note sits on each invoice/transaction.
 NOTE_ANCHOR = {
-	"Sales Invoice": "company_tax_id",
+	"Sales Invoice": "tax_id",
 	"Purchase Invoice": "company",
+	"Sales Order": "tax_id",
+	"Delivery Note": "tax_id",
+	"Quotation": "tax_id",
 }
 
 FIELD = "remarks"
@@ -91,9 +94,164 @@ def hide_custom_notes():
 	)
 
 
+def setup_sales_customizations():
+	"""Configure tax_id fetch_from and company_tax_id hidden on selling documents only."""
+	selling_doctypes = ("Sales Invoice", "Sales Order", "Delivery Note", "Quotation")
+	for dt in selling_doctypes:
+		if not frappe.db.exists("DocType", dt):
+			continue
+
+		meta = frappe.get_meta(dt)
+
+		# 1. tax_id fetch_from customer.custom_vat_registration_number
+		if meta.has_field("tax_id"):
+			ps_name = f"{dt}-tax_id-fetch_from"
+			if not frappe.db.exists("Property Setter", ps_name):
+				frappe.make_property_setter(
+					{
+						"doctype": dt,
+						"doctype_or_field": "DocField",
+						"fieldname": "tax_id",
+						"property": "fetch_from",
+						"value": "customer.custom_vat_registration_number",
+						"property_type": "Small Text",
+					},
+					is_system_generated=False,
+				)
+				frappe.db.set_value("Property Setter", ps_name, "module", "Mu Customers")
+			else:
+				frappe.db.set_value(
+					"Property Setter",
+					ps_name,
+					{"value": "customer.custom_vat_registration_number", "module": "Mu Customers"},
+				)
+
+		# 2. company_tax_id hidden = 1
+		if meta.has_field("company_tax_id"):
+			ps_name = f"{dt}-company_tax_id-hidden"
+			if not frappe.db.exists("Property Setter", ps_name):
+				frappe.make_property_setter(
+					{
+						"doctype": dt,
+						"doctype_or_field": "DocField",
+						"fieldname": "company_tax_id",
+						"property": "hidden",
+						"value": "1",
+						"property_type": "Check",
+					},
+					is_system_generated=False,
+				)
+				frappe.db.set_value("Property Setter", ps_name, "module", "Mu Customers")
+			else:
+				frappe.db.set_value(
+					"Property Setter",
+					ps_name,
+					{"value": "1", "module": "Mu Customers"},
+				)
+
+
+def reorder_customer_fields():
+	"""Place custom_vat_registration_number under customer_group, and custom_commercial_register_no under custom_vat_registration_number."""
+	if not frappe.db.exists("DocType", "Customer"):
+		return
+
+	# Update insert_after on Custom Fields if they exist
+	if frappe.db.exists("Custom Field", "Customer-custom_vat_registration_number"):
+		frappe.db.set_value("Custom Field", "Customer-custom_vat_registration_number", "insert_after", "customer_group")
+
+	if frappe.db.exists("Custom Field", "Customer-custom_commercial_register_no"):
+		frappe.db.set_value("Custom Field", "Customer-custom_commercial_register_no", "insert_after", "custom_vat_registration_number")
+
+	meta = frappe.get_meta("Customer")
+	order = [df.fieldname for df in meta.fields]
+	if not order or "customer_group" not in order:
+		return
+
+	changed = False
+	if "custom_vat_registration_number" in order:
+		order.remove("custom_vat_registration_number")
+		order.insert(order.index("customer_group") + 1, "custom_vat_registration_number")
+		changed = True
+
+	if "custom_commercial_register_no" in order:
+		order.remove("custom_commercial_register_no")
+		anchor = "custom_vat_registration_number" if "custom_vat_registration_number" in order else "customer_group"
+		order.insert(order.index(anchor) + 1, "custom_commercial_register_no")
+		changed = True
+
+	if changed:
+		frappe.make_property_setter(
+			{
+				"doctype": "Customer",
+				"doctype_or_field": "DocType",
+				"property": "field_order",
+				"value": json.dumps(order),
+				"property_type": "Text",
+			},
+			is_system_generated=False,
+		)
+		frappe.db.set_value("Property Setter", "Customer-main-field_order", "module", "Mu Customers")
+
+
+def setup_customer_collapsible_sections():
+	"""Make Defaults and Customer IDs sections collapsible in Customer doctype."""
+	if not frappe.db.exists("DocType", "Customer"):
+		return
+
+	meta = frappe.get_meta("Customer")
+
+	# 1. Defaults section (defaults_tab)
+	if meta.has_field("defaults_tab") or frappe.db.exists("Custom Field", "Customer-defaults_tab"):
+		ps_name = "Customer-defaults_tab-collapsible"
+		if not frappe.db.exists("Property Setter", ps_name):
+			frappe.make_property_setter(
+				{
+					"doctype": "Customer",
+					"doctype_or_field": "DocField",
+					"fieldname": "defaults_tab",
+					"property": "collapsible",
+					"value": "1",
+					"property_type": "Check",
+				},
+				is_system_generated=False,
+			)
+			frappe.db.set_value("Property Setter", ps_name, "module", "Mu Customers")
+		else:
+			frappe.db.set_value("Property Setter", ps_name, "value", "1")
+
+	# 2. Customer IDs section (custom_section_break_nxdgf or matching label)
+	target_sec = "custom_section_break_nxdgf"
+	if not (meta.has_field(target_sec) or frappe.db.exists("Custom Field", f"Customer-{target_sec}")):
+		for df in meta.fields:
+			if df.fieldtype == "Section Break" and (df.label or "").strip().lower() in ("customer ids", "customer id"):
+				target_sec = df.fieldname
+				break
+
+	if meta.has_field(target_sec) or frappe.db.exists("Custom Field", f"Customer-{target_sec}"):
+		ps_name = f"Customer-{target_sec}-collapsible"
+		if not frappe.db.exists("Property Setter", ps_name):
+			frappe.make_property_setter(
+				{
+					"doctype": "Customer",
+					"doctype_or_field": "DocField",
+					"fieldname": target_sec,
+					"property": "collapsible",
+					"value": "1",
+					"property_type": "Check",
+				},
+				is_system_generated=False,
+			)
+			frappe.db.set_value("Property Setter", ps_name, "module", "Mu Customers")
+		else:
+			frappe.db.set_value("Property Setter", ps_name, "value", "1")
+
+
 def apply(doctype=None):
 	"""Write the field_order property setter for target doctypes and hide custom_notes."""
 	hide_custom_notes()
+	setup_sales_customizations()
+	reorder_customer_fields()
+	setup_customer_collapsible_sections()
 	moved = []
 
 	targets = [doctype] if doctype else ALL_TARGET_DOCTYPES
