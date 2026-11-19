@@ -273,6 +273,40 @@ def setup_customer_collapsible_sections():
 			frappe.db.set_value("Property Setter", ps_name, "value", "1")
 
 
+def reorder_item_fields():
+	"""Place has_variants and is_fixed_asset directly under is_stock_item in Item's first section."""
+	if not frappe.db.exists("DocType", "Item"):
+		return
+
+	meta = frappe.get_meta("Item")
+	order = [df.fieldname for df in meta.fields]
+	if not order or "is_stock_item" not in order:
+		return
+
+	new_order = list(order)
+	if "has_variants" in new_order:
+		new_order.remove("has_variants")
+		new_order.insert(new_order.index("is_stock_item") + 1, "has_variants")
+
+	if "is_fixed_asset" in new_order:
+		new_order.remove("is_fixed_asset")
+		anchor = "has_variants" if "has_variants" in new_order else "is_stock_item"
+		new_order.insert(new_order.index(anchor) + 1, "is_fixed_asset")
+
+	if new_order != order:
+		frappe.make_property_setter(
+			{
+				"doctype": "Item",
+				"doctype_or_field": "DocType",
+				"property": "field_order",
+				"value": json.dumps(new_order),
+				"property_type": "Text",
+			},
+			is_system_generated=False,
+		)
+		frappe.db.set_value("Property Setter", "Item-main-field_order", "module", "Mu Customers")
+
+
 def apply(doctype=None):
 	"""Write the field_order property setter for target doctypes and hide custom_notes."""
 	remove_extra_notes_fields()
@@ -280,6 +314,7 @@ def apply(doctype=None):
 	setup_sales_customizations()
 	reorder_customer_fields()
 	setup_customer_collapsible_sections()
+	reorder_item_fields()
 	moved = []
 
 	targets = [doctype] if doctype else ALL_TARGET_DOCTYPES
