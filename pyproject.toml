@@ -1,7 +1,7 @@
 [project]
 name = "mu_customers"
 authors = [
-    { name = "Mubtkir", email = "sales@mubtkir.com" , website = "https://mubtkir.com"}
+    { name = "Mubtkir ERP", email = "sales@mubtkir.com"}
 ]
 description = "Mu Customers"
 requires-python = ">=3.10"
