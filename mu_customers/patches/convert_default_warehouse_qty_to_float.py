@@ -18,14 +18,14 @@ def execute():
 		# Nothing to convert - the field ships as a Float in fixtures.
 		return
 
-	column_type = frappe.db.sql(
+	column_info = frappe.db.sql(
 		"""
-		SELECT column_type FROM information_schema.columns
+		SELECT column_type, is_nullable FROM information_schema.columns
 		WHERE table_schema = DATABASE() AND table_name = 'tabItem' AND column_name = %s
 		""",
 		FIELD,
 	)
-	if column_type and column_type[0][0].startswith("decimal"):
+	if column_info and column_info[0][0].startswith("decimal") and column_info[0][1] == "NO":
 		return
 
 	# NULLs and any non-numeric text left over from the Data era become 0;

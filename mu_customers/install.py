@@ -2,14 +2,16 @@ import frappe
 
 
 def before_install():
-	"""Nothing destructive runs here any more.
+	"""Convert any pre-existing custom_default_warehouse_qty column before fixtures sync.
 
-	The previous version deleted seven Property Setters the app does not own,
-	including Purchase Invoice-bill_no-unique - the control that stops the same
-	supplier invoice being entered and paid twice. Layout preferences now ship
-	as fixtures instead of being enforced by deletion.
+	On sites restored from a template DB or after a partial install, `tabItem`
+	may already contain `custom_default_warehouse_qty` as a nullable/varchar
+	column with NULLs, causing `sync_fixtures` -> `ALTER TABLE ... MODIFY`
+	to fail with DataError 1265 in MariaDB strict mode.
 	"""
-	pass
+	from mu_customers.patches.convert_default_warehouse_qty_to_float import execute
+
+	execute()
 
 
 def after_install():
